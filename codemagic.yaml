@@ -1,0 +1,28 @@
+workflows:
+  ios-app:
+    name: Build iOS App
+    environment:
+      xcode: latest
+    scripts:
+      - name: Set up keychain
+        script: |
+          security create-keychain -p "" ios-build.keychain
+          security default-keychain -s ios-build.keychain
+          security unlock-keychain -p "" ios-build.keychain
+          security set-keychain-settings
+      - name: Install dependencies
+        script: |
+          pod install || true
+      - name: Build .ipa
+        script: |
+          xcodebuild -workspace ChefGrocer.xcworkspace \
+                     -scheme ChefGrocer \
+                     -sdk iphoneos \
+                     -configuration Release \
+                     archive -archivePath $CM_BUILD_DIR/ChefGrocer.xcarchive
+          xcodebuild -exportArchive \
+                     -archivePath $CM_BUILD_DIR/ChefGrocer.xcarchive \
+                     -exportOptionsPlist ExportOptions.plist \
+                     -exportPath $CM_BUILD_DIR/exported
+    artifacts:
+      - build/ios/ipa/*.ipa
